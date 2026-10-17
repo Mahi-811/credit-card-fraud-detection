@@ -1,0 +1,6 @@
+bucket_id,amount_bucket,min_amt,max_amt,fraud_risk_profile
+1,Micro (<$10),0.0,10.0,Card Testing / Ping Attack
+2,Low ($10-$50),10.0,50.0,Everyday Purchases
+3,Medium ($50-$200),50.0,200.0,Retail & Dining
+4,High ($200-$1000),200.0,1000.0,High-Ticket Retail & Travel
+5,Critical (>$1000),1000.0,999999.0,High-Exposure Drains

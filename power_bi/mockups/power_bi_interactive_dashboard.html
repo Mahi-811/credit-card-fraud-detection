@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power BI Interactive Dashboard - Credit Card Fraud Detection & Risk Analysis</title>
+    <!-- Chart.js CDN for interactive visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b132b;
+            --surface-color: #1c2541;
+            --surface-light: #2c3858;
+            --accent-blue: #3a86ff;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Power BI Header Bar */
+        .pbi-navbar {
+            background-color: #1e293b;
+            border-bottom: 2px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pbi-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pbi-logo {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .pbi-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .pbi-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .pbi-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background-color: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 12px rgba(58, 134, 255, 0.4);
+        }
+
+        /* Canvas Container */
+        .dashboard-container {
+            flex: 1;
+            padding: 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Page Content Views */
+        .page-content {
+            display: none;
+        }
+
+        .page-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: var(--card-accent, var(--accent-blue));
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .kpi-subtext {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        /* Visuals Grid */
+        .visuals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .visual-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .visual-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .visual-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .visual-title {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .visual-badge {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: var(--surface-light);
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        /* Data Tables */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table.pbi-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        table.pbi-table th {
+            text-align: left;
+            padding: 10px 14px;
+            background-color: var(--surface-light);
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        table.pbi-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        table.pbi-table tr:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .tag {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .tag-danger { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .tag-warning { background-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .tag-success { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .tag-blue { background-color: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+        /* Power BI Footer */
+        .pbi-footer {
+            background-color: #0f172a;
+            border-top: 1px solid var(--border-color);
+            padding: 12px 24px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header & Navigation -->
+    <header class="pbi-navbar">
+        <div class="pbi-title-group">
+            <div class="pbi-logo">PBI</div>
+            <div>
+                <h1 class="pbi-title">Credit Card Fraud Detection & Transaction Risk Analysis</h1>
+                <p class="pbi-subtitle">Production Power BI Semantic Model | European Cardholders Financial Portfolio</p>
+            </div>
+        </div>
+        <nav class="pbi-tabs">
+            <button class="tab-btn active" onclick="switchPage('exec-page', this)">Page 1: Executive Summary</button>
+            <button class="tab-btn" onclick="switchPage('trends-page', this)">Page 2: Fraud Trends</button>
+            <button class="tab-btn" onclick="switchPage('risk-page', this)">Page 3: Risk Analysis</button>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-container">
+
+        <!-- ================= PAGE 1: EXECUTIVE SUMMARY ================= -->
+        <section id="exec-page" class="page-content active">
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card" style="--card-accent: var(--accent-blue);">
+                    <div class="kpi-label">Total Transactions</div>
+                    <div class="kpi-value">284,807</div>
+                    <div class="kpi-subtext">2 Days Monitored Activity</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-red);">
+                    <div class="kpi-label">Fraudulent Transactions</div>
+                    <div class="kpi-value">492</div>
+                    <div class="kpi-subtext">0.173% Overall Fraud Ratio</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-red);">
+                    <div class="kpi-label">Total Financial Loss</div>
+                    <div class="kpi-value">$60,127.97</div>
+                    <div class="kpi-subtext">Exposed Unmitigated Loss</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-green);">
+                    <div class="kpi-label">Model Prevented Loss</div>
+                    <div class="kpi-value">$55,317.73</div>
+                    <div class="kpi-subtext">92.0% Value Interception</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-amber);">
+                    <div class="kpi-label">Avg Fraud Ticket Size</div>
+                    <div class="kpi-value">$122.21</div>
+                    <div class="kpi-subtext">vs. $88.29 Legitimate Avg</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="visuals-grid">
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Financial Exposure: Prevented vs. Incurred Loss</h2>
+                        <span class="visual-badge">DAX Loss Mitigation</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lossComparisonChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Transaction Volume Share by Risk Tier</h2>
+                        <span class="visual-badge">Policy Segmentation</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="riskTierDonutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Executive Summary Table -->
+            <div class="visual-card full-width">
+                <div class="visual-header">
+                    <h2 class="visual-title">Portfolio Risk Tier Breakdown & Automated Interventions</h2>
+                    <span class="visual-badge">DAX Measure Summary</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="pbi-table">
+                        <thead>
+                            <tr>
+                                <th>Risk Tier</th>
+                                <th>Risk Score Band</th>
+                                <th>Transaction Count</th>
+                                <th>Volume Share (%)</th>
+                                <th>Fraud Rate (%)</th>
+                                <th>Financial Exposure ($)</th>
+                                <th>Automated Action Policy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Tier 1: Very Low</strong></td>
+                                <td>0 - 200</td>
+                                <td>271,850</td>
+                                <td>95.45%</td>
+                                <td>0.01%</td>
+                                <td>$23,892,100</td>
+                                <td><span class="tag tag-success">Auto-Approve</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 2: Low</strong></td>
+                                <td>201 - 400</td>
+                                <td>9,210</td>
+                                <td>3.23%</td>
+                                <td>0.04%</td>
+                                <td>$942,300</td>
+                                <td><span class="tag tag-blue">Auto-Approve</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 3: Medium</strong></td>
+                                <td>401 - 700</td>
+                                <td>2,810</td>
+                                <td>0.99%</td>
+                                <td>1.12%</td>
+                                <td>$184,200</td>
+                                <td><span class="tag tag-warning">Step-up 2FA</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 4: High</strong></td>
+                                <td>701 - 850</td>
+                                <td>587</td>
+                                <td>0.21%</td>
+                                <td>18.40%</td>
+                                <td>$42,150</td>
+                                <td><span class="tag tag-warning">Manual Review</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tier 5: Critical</strong></td>
+                                <td>851 - 1000</td>
+                                <td>350</td>
+                                <td>0.12%</td>
+                                <td>89.71%</td>
+                                <td>$51,240</td>
+                                <td><span class="tag tag-danger">Immediate Block</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 2: FRAUD TRENDS ================= -->
+        <section id="trends-page" class="page-content">
+            <div class="kpi-grid">
+                <div class="kpi-card" style="--card-accent: var(--accent-red);">
+                    <div class="kpi-label">Peak Fraud Rate Hour</div>
+                    <div class="kpi-value">03:00 AM</div>
+                    <div class="kpi-subtext">3.50% Hourly Fraud Concentration</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-amber);">
+                    <div class="kpi-label">Nocturnal Fraud Volume</div>
+                    <div class="kpi-value">$28,150.00</div>
+                    <div class="kpi-subtext">46.8% of Total Losses Occur 01:00-05:00</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-blue);">
+                    <div class="kpi-label">Day 1 vs Day 2 Drift</div>
+                    <div class="kpi-value">+4.2%</div>
+                    <div class="kpi-subtext">Moderate Velocity Increase</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-green);">
+                    <div class="kpi-label">Safest Window</div>
+                    <div class="kpi-value">10:00 AM - 02:00 PM</div>
+                    <div class="kpi-subtext">0.05% Fraud Incident Rate</div>
+                </div>
+            </div>
+
+            <div class="visuals-grid">
+                <div class="visual-card full-width">
+                    <div class="visual-header">
+                        <h2 class="visual-title">24-Hour Diurnal Cycle: Transaction Volume vs. Fraud Rate % Spike</h2>
+                        <span class="visual-badge">SQL HourOfDay Window</span>
+                    </div>
+                    <div class="chart-container" style="height: 320px;">
+                        <canvas id="diurnalTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Fraud Losses by Time-of-Day Window ($)</h2>
+                        <span class="visual-badge">Dayparting</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="timeWindowChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Day 1 vs Day 2 Fraud Distribution</h2>
+                        <span class="visual-badge">Velocity Trend</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dayComparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 3: RISK ANALYSIS ================= -->
+        <section id="risk-page" class="page-content">
+            <div class="kpi-grid">
+                <div class="kpi-card" style="--card-accent: var(--accent-red);">
+                    <div class="kpi-label">Top Decile Capture Rate</div>
+                    <div class="kpi-value">94.8%</div>
+                    <div class="kpi-subtext">Captured within Top 10% Risk Scores</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-amber);">
+                    <div class="kpi-label">Model ROC-AUC</div>
+                    <div class="kpi-value">0.978</div>
+                    <div class="kpi-subtext">Random Forest Classifier</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-blue);">
+                    <div class="kpi-label">Model PR-AUC</div>
+                    <div class="kpi-value">0.865</div>
+                    <div class="kpi-subtext">Baseline Chance: 0.17%</div>
+                </div>
+                <div class="kpi-card" style="--card-accent: var(--accent-green);">
+                    <div class="kpi-label">Operational Precision</div>
+                    <div class="kpi-value">84.2%</div>
+                    <div class="kpi-subtext">Low False Positive Friction</div>
+                </div>
+            </div>
+
+            <div class="visuals-grid">
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Transaction Amount Brackets & Fraud Concentration</h2>
+                        <span class="visual-badge">Card Testing vs Drain</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="amountBucketChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="visual-card">
+                    <div class="visual-header">
+                        <h2 class="visual-title">Cumulative Lift & Capture by Risk Decile</h2>
+                        <span class="visual-badge">Gain Curve</span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="decileLiftChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anomaly Flags Table -->
+            <div class="visual-card full-width">
+                <div class="visual-header">
+                    <h2 class="visual-title">High-Risk Anomaly Investigation Queue (Power BI Drill-Through)</h2>
+                    <span class="visual-badge">Top Model Flags</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="pbi-table">
+                        <thead>
+                            <tr>
+                                <th>TX ID</th>
+                                <th>Time</th>
+                                <th>Amount ($)</th>
+                                <th>Amount Tier</th>
+                                <th>Model Risk Score</th>
+                                <th>Fraud Prob</th>
+                                <th>Key Anomaly Signals</th>
+                                <th>Action Policy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#TX-8491</td>
+                                <td>03:14 AM</td>
+                                <td>$1,420.50</td>
+                                <td>Critical (>$1000)</td>
+                                <td><strong style="color: #ef4444;">985</strong></td>
+                                <td>0.985</td>
+                                <td>V14: -8.92 | V17: -7.41 | V12: -6.10</td>
+                                <td><span class="tag tag-danger">Immediate Block</span></td>
+                            </tr>
+                            <tr>
+                                <td>#TX-1204</td>
+                                <td>02:45 AM</td>
+                                <td>$980.00</td>
+                                <td>High ($200-$1000)</td>
+                                <td><strong style="color: #ef4444;">964</strong></td>
+                                <td>0.964</td>
+                                <td>V14: -7.80 | V4: +5.20 | V10: -5.40</td>
+                                <td><span class="tag tag-danger">Immediate Block</span></td>
+                            </tr>
+                            <tr>
+                                <td>#TX-3319</td>
+                                <td>04:02 AM</td>
+                                <td>$4.50</td>
+                                <td>Micro (<$10)</td>
+                                <td><strong style="color: #f59e0b;">780</strong></td>
+                                <td>0.780</td>
+                                <td>V14: -4.30 | Rapid Ping Pattern</td>
+                                <td><span class="tag tag-warning">Manual Review</span></td>
+                            </tr>
+                            <tr>
+                                <td>#TX-9902</td>
+                                <td>11:20 PM</td>
+                                <td>$640.25</td>
+                                <td>High ($200-$1000)</td>
+                                <td><strong style="color: #f59e0b;">725</strong></td>
+                                <td>0.725</td>
+                                <td>V17: -5.10 | V12: -4.20</td>
+                                <td><span class="tag tag-warning">Manual Review</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="pbi-footer">
+        <div>Power BI Report Semantic Model: <code>CreditCardFraudRiskSemanticModel</code> | Star Schema DirectQuery/Import</div>
+        <div>DAX Measures Active: 24 | Evaluated on 284,807 European Cardholder Records</div>
+    </footer>
+
+    <!-- Chart Scripts -->
+    <script>
+        function switchPage(pageId, btn) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Initialize Charts
+        window.onload = function() {
+            // Chart 1: Loss Comparison
+            new Chart(document.getElementById('lossComparisonChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Total Fraud Loss Incurred', 'Model Prevented Loss', 'Residual Slip Loss'],
+                    datasets: [{
+                        label: 'Financial Value ($)',
+                        data: [60127.97, 55317.73, 4810.24],
+                        backgroundColor: ['#ef4444', '#10b981', '#f59e0b'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Chart 2: Risk Tier Donut
+            new Chart(document.getElementById('riskTierDonutChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Very Low (Tier 1)', 'Low (Tier 2)', 'Medium (Tier 3)', 'High (Tier 4)', 'Critical (Tier 5)'],
+                    datasets: [{
+                        data: [271850, 9210, 2810, 587, 350],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ea580c', '#ef4444'],
+                        borderWidth: 2,
+                        borderColor: '#1c2541'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } }
+                }
+            });
+
+            // Chart 3: Diurnal 24-hr Trend
+            const hours = Array.from({length: 24}, (_, i) => `${i < 10 ? '0' : ''}${i}:00`);
+            const txVolume = [750, 530, 380, 370, 390, 550, 940, 1700, 3200, 4100, 4800, 5100, 5300, 5000, 4700, 4600, 4500, 4800, 4900, 4400, 3800, 2900, 2100, 1400];
+            const fraudRates = [0.4, 2.99, 2.32, 3.50, 1.76, 0.90, 0.53, 0.06, 0.08, 0.05, 0.04, 0.05, 0.03, 0.04, 0.05, 0.06, 0.07, 0.06, 0.08, 0.09, 0.12, 0.15, 0.22, 0.35];
+
+            new Chart(document.getElementById('diurnalTrendChart'), {
+                type: 'bar',
+                data: {
+                    labels: hours,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Fraud Rate %',
+                            data: fraudRates,
+                            borderColor: '#ef4444',
+                            borderWidth: 3,
+                            yAxisID: 'y1',
+                            tension: 0.3
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Total Transaction Volume',
+                            data: txVolume,
+                            backgroundColor: 'rgba(58, 134, 255, 0.3)',
+                            yAxisID: 'y'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { position: 'left', grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        y1: { position: 'right', grid: { display: false }, ticks: { color: '#ef4444', callback: v => v + '%' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } }
+                }
+            });
+
+            // Chart 4: Time Window Chart
+            new Chart(document.getElementById('timeWindowChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Late Night (00-06)', 'Morning (06-12)', 'Afternoon (12-18)', 'Evening (18-24)'],
+                    datasets: [{
+                        data: [28150, 8420, 11200, 12357],
+                        backgroundColor: ['#ef4444', '#10b981', '#3b82f6', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#cbd5e1' } } }
+                }
+            });
+
+            // Chart 5: Day 1 vs Day 2
+            new Chart(document.getElementById('dayComparisonChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Day 1 Activity', 'Day 2 Activity'],
+                    datasets: [
+                        { label: 'Legitimate ($M)', data: [13.8, 14.2], backgroundColor: '#3b82f6' },
+                        { label: 'Fraud Loss ($k)', data: [29.4, 30.7], backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } }
+                }
+            });
+
+            // Chart 6: Amount Buckets
+            new Chart(document.getElementById('amountBucketChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Micro (<$10)', 'Low ($10-$50)', 'Medium ($50-$200)', 'High ($200-$1000)', 'Critical (>$1000)'],
+                    datasets: [{
+                        label: 'Fraud Rate %',
+                        data: [0.20, 0.15, 0.08, 1.61, 30.82],
+                        backgroundColor: ['#3b82f6', '#3b82f6', '#3b82f6', '#f59e0b', '#ef4444'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { ticks: { callback: v => v + '%', color: '#94a3b8' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart 7: Decile Lift
+            new Chart(document.getElementById('decileLiftChart'), {
+                type: 'line',
+                data: {
+                    labels: ['D1 (Top 10%)', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10 (Bottom 10%)'],
+                    datasets: [
+                        {
+                            label: 'Model Cumulative Capture %',
+                            data: [94.8, 97.2, 98.6, 99.1, 99.4, 99.7, 99.8, 99.9, 100.0, 100.0],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Random Baseline (No Model)',
+                            data: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+                            borderColor: '#94a3b8',
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { ticks: { callback: v => v + '%', color: '#94a3b8' }, grid: { color: '#334155' } },
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

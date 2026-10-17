@@ -1,0 +1,25 @@
+hour_of_day,hour_label,time_window,is_nocturnal_risk_window,shift_name
+0,00:00,Late Night (0-6),1,Graveyard
+1,01:00,Late Night (0-6),1,Graveyard
+2,02:00,Late Night (0-6),1,Graveyard
+3,03:00,Late Night (0-6),1,Graveyard
+4,04:00,Late Night (0-6),1,Graveyard
+5,05:00,Late Night (0-6),1,Graveyard
+6,06:00,Morning (6-12),0,Morning
+7,07:00,Morning (6-12),0,Morning
+8,08:00,Morning (6-12),0,Morning
+9,09:00,Morning (6-12),0,Morning
+10,10:00,Morning (6-12),0,Morning
+11,11:00,Morning (6-12),0,Morning
+12,12:00,Afternoon (12-18),0,Afternoon
+13,13:00,Afternoon (12-18),0,Afternoon
+14,14:00,Afternoon (12-18),0,Afternoon
+15,15:00,Afternoon (12-18),0,Afternoon
+16,16:00,Afternoon (12-18),0,Afternoon
+17,17:00,Afternoon (12-18),0,Afternoon
+18,18:00,Evening (18-24),0,Evening
+19,19:00,Evening (18-24),0,Evening
+20,20:00,Evening (18-24),0,Evening
+21,21:00,Evening (18-24),0,Evening
+22,22:00,Evening (18-24),0,Evening
+23,23:00,Evening (18-24),0,Evening

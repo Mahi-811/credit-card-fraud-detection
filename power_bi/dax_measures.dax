@@ -1,0 +1,172 @@
+// ============================================================================
+// Power BI DAX Calculation Measures: Credit Card Fraud & Risk Analytics
+// Author: Financial Risk & ML Analytics Team
+// Optimized for Star Schema semantic model (fact_transactions & dim tables)
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// PAGE 1: EXECUTIVE SUMMARY DAX MEASURES
+// ----------------------------------------------------------------------------
+
+// 1. Total Transaction Count
+Total Transactions = 
+COUNTROWS(fact_transactions)
+
+// 2. Total Legitimate Transactions
+Legitimate Transactions = 
+CALCULATE(
+    COUNTROWS(fact_transactions),
+    fact_transactions[is_fraud] = 0
+)
+
+// 3. Total Fraudulent Transactions
+Fraud Transactions = 
+CALCULATE(
+    COUNTROWS(fact_transactions),
+    fact_transactions[is_fraud] = 1
+)
+
+// 4. Global Fraud Rate Percentage
+Fraud Rate % = 
+DIVIDE([Fraud Transactions], [Total Transactions], 0) * 100
+
+// 5. Total Financial Transaction Volume ($)
+Total Transaction Volume = 
+SUM(fact_transactions[amount])
+
+// 6. Total Financial Loss from Fraud ($)
+Fraud Financial Loss = 
+CALCULATE(
+    SUM(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 1
+)
+
+// 7. Legitimate Financial Volume ($)
+Legitimate Volume = 
+CALCULATE(
+    SUM(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 0
+)
+
+// 8. Fraud Dollar Volume Share (%)
+Fraud Volume Share % = 
+DIVIDE([Fraud Financial Loss], [Total Transaction Volume], 0) * 100
+
+// 9. Average Fraud Ticket Size ($)
+Avg Fraud Amount = 
+CALCULATE(
+    AVERAGE(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 1
+)
+
+// 10. Average Legitimate Ticket Size ($)
+Avg Legit Amount = 
+CALCULATE(
+    AVERAGE(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 0
+)
+
+// 11. Potential Financial Loss Prevented ($)
+// Intercepted by High and Critical Risk Tiers (Risk Score >= 700)
+Potential Loss Prevented = 
+CALCULATE(
+    SUM(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 1,
+    fact_transactions[risk_score] >= 700
+)
+
+// 12. Loss Prevention Rate (%)
+Loss Prevention Rate % = 
+DIVIDE([Potential Loss Prevented], [Fraud Financial Loss], 0) * 100
+
+
+// ----------------------------------------------------------------------------
+// PAGE 2: FRAUD TRENDS & DIURNAL ANALYSIS DAX MEASURES
+// ----------------------------------------------------------------------------
+
+// 13. Nocturnal Fraud Transactions (Between 01:00 and 05:00)
+Nocturnal Fraud Volume = 
+CALCULATE(
+    SUM(fact_transactions[amount]),
+    fact_transactions[is_fraud] = 1,
+    fact_transactions[hour_of_day] >= 1,
+    fact_transactions[hour_of_day] <= 5
+)
+
+// 14. Nocturnal Fraud Ratio (%)
+Nocturnal Fraud % = 
+DIVIDE([Nocturnal Fraud Volume], [Fraud Financial Loss], 0) * 100
+
+// 15. Peak Fraud Hour Label
+Peak Fraud Hour = 
+TOPN(
+    1,
+    VALUES(fact_transactions[hour_of_day]),
+    [Fraud Rate %],
+    DESC
+)
+
+// 16. Day 1 Fraud Volume
+Day 1 Fraud Loss = 
+CALCULATE(
+    [Fraud Financial Loss],
+    fact_transactions[day_number] = 1
+)
+
+// 17. Day 2 Fraud Volume
+Day 2 Fraud Loss = 
+CALCULATE(
+    [Fraud Financial Loss],
+    fact_transactions[day_number] = 2
+)
+
+// 18. Day-over-Day Fraud Growth (%)
+DoD Fraud Loss Growth % = 
+DIVIDE([Day 2 Fraud Loss] - [Day 1 Fraud Loss], [Day 1 Fraud Loss], 0) * 100
+
+
+// ----------------------------------------------------------------------------
+// PAGE 3: TRANSACTION RISK ANALYSIS & DECISION ENGINE DAX MEASURES
+// ----------------------------------------------------------------------------
+
+// 19. Average Model Risk Score
+Avg Risk Score = 
+AVERAGE(fact_transactions[risk_score])
+
+// 20. Critical Risk Transaction Count (Risk Score >= 850)
+Critical Risk Count = 
+CALCULATE(
+    COUNTROWS(fact_transactions),
+    fact_transactions[risk_score] >= 850
+)
+
+// 21. High & Critical Exposure ($)
+High Risk Exposure Volume = 
+CALCULATE(
+    SUM(fact_transactions[amount]),
+    fact_transactions[risk_score] >= 700
+)
+
+// 22. False Positive Count (Legit transactions flagged as High/Critical)
+False Positive Flag Count = 
+CALCULATE(
+    COUNTROWS(fact_transactions),
+    fact_transactions[is_fraud] = 0,
+    fact_transactions[risk_score] >= 700
+)
+
+// 23. Precision at Current Threshold (%)
+Model Operational Precision % = 
+VAR TruePositives = CALCULATE(COUNTROWS(fact_transactions), fact_transactions[is_fraud] = 1, fact_transactions[risk_score] >= 700)
+VAR FlaggedTotal = CALCULATE(COUNTROWS(fact_transactions), fact_transactions[risk_score] >= 700)
+RETURN
+DIVIDE(TruePositives, FlaggedTotal, 0) * 100
+
+// 24. Cumulative Fraud Capture % for Deciles
+Cumulative Capture % = 
+VAR CurrentDecile = SELECTEDVALUE(dim_risk_tier[risk_decile])
+RETURN
+CALCULATE(
+    [Fraud Rate %],
+    dim_risk_tier[risk_decile] <= CurrentDecile
+)

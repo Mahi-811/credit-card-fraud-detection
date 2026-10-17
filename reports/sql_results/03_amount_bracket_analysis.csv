@@ -1,0 +1,6 @@
+amount_bucket,total_transactions,fraud_transactions,fraud_rate_pct,total_fraud_loss
+Critical (>$1000),159,49,30.818,67413.23
+High ($200-$1000),2615,42,1.606,28020.23
+Micro (<$10),12101,24,0.198,136.2
+Low ($10-$50),23301,35,0.15,592.25
+Medium ($50-$200),11824,0,0.0,0.0

@@ -1,0 +1,6 @@
+tier_id,risk_tier,min_score,max_score,policy_action,sla_target,analyst_review
+1,Tier 1: Very Low,0,200,Auto-Approve,Instant (<100ms),0
+2,Tier 2: Low,201,400,Auto-Approve,Instant (<100ms),0
+3,Tier 3: Medium,401,700,Step-up 2FA Challenge,User Verification (<60s),0
+4,Tier 4: High,701,850,Manual Analyst Review,Queue Review (<15m),1
+5,Tier 5: Critical,851,1000,Immediate Block & Decline,Immediate Freeze (<10ms),1

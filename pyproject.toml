@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "credit-card-fraud-detection"
+version = "1.0.0"
+authors = [
+  { name = "Portfolio Project Author" }
+]
+description = "Credit Card Fraud Detection & Transaction Risk Analysis with Machine Learning, SQL, and Power BI"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.4.0",
+    "joblib>=1.3.0",
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "SQLAlchemy>=2.0.0",
+    "streamlit>=1.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "flake8>=7.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

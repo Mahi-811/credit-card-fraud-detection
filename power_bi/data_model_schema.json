@@ -1,0 +1,93 @@
+{
+  "model_name": "CreditCardFraudRiskSemanticModel",
+  "version": "1.0.0",
+  "description": "Star-Schema analytical model for Credit Card Fraud Detection and Transaction Risk Analysis in Power BI",
+  "tables": [
+    {
+      "name": "fact_transactions",
+      "type": "Fact",
+      "source_file": "fact_transactions.csv",
+      "columns": [
+        {"name": "transaction_id", "dataType": "Int64", "isKey": true},
+        {"name": "hour_of_day", "dataType": "Int64"},
+        {"name": "day_number", "dataType": "Int64"},
+        {"name": "tier_id", "dataType": "Int64"},
+        {"name": "bucket_id", "dataType": "Int64"},
+        {"name": "amount", "dataType": "Decimal"},
+        {"name": "is_fraud", "dataType": "Int64"},
+        {"name": "fraud_probability", "dataType": "Double"},
+        {"name": "risk_score", "dataType": "Int64"},
+        {"name": "expected_loss_usd", "dataType": "Decimal"},
+        {"name": "v14", "dataType": "Double"},
+        {"name": "v17", "dataType": "Double"},
+        {"name": "v12", "dataType": "Double"},
+        {"name": "v10", "dataType": "Double"},
+        {"name": "v4", "dataType": "Double"}
+      ]
+    },
+    {
+      "name": "dim_time",
+      "type": "Dimension",
+      "source_file": "dim_time.csv",
+      "columns": [
+        {"name": "hour_of_day", "dataType": "Int64", "isKey": true},
+        {"name": "hour_label", "dataType": "String"},
+        {"name": "time_window", "dataType": "String"},
+        {"name": "is_nocturnal_risk_window", "dataType": "Int64"},
+        {"name": "shift_name", "dataType": "String"}
+      ]
+    },
+    {
+      "name": "dim_risk_tier",
+      "type": "Dimension",
+      "source_file": "dim_risk_tier.csv",
+      "columns": [
+        {"name": "tier_id", "dataType": "Int64", "isKey": true},
+        {"name": "risk_tier", "dataType": "String"},
+        {"name": "min_score", "dataType": "Int64"},
+        {"name": "max_score", "dataType": "Int64"},
+        {"name": "policy_action", "dataType": "String"},
+        {"name": "sla_target", "dataType": "String"},
+        {"name": "analyst_review", "dataType": "Int64"}
+      ]
+    },
+    {
+      "name": "dim_amount_bucket",
+      "type": "Dimension",
+      "source_file": "dim_amount_bucket.csv",
+      "columns": [
+        {"name": "bucket_id", "dataType": "Int64", "isKey": true},
+        {"name": "amount_bucket", "dataType": "String"},
+        {"name": "min_amt", "dataType": "Decimal"},
+        {"name": "max_amt", "dataType": "Decimal"},
+        {"name": "fraud_risk_profile", "dataType": "String"}
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "fromTable": "fact_transactions",
+      "fromColumn": "hour_of_day",
+      "toTable": "dim_time",
+      "toColumn": "hour_of_day",
+      "cardinality": "ManyToOne",
+      "crossFilteringBehavior": "BothDirections"
+    },
+    {
+      "fromTable": "fact_transactions",
+      "fromColumn": "tier_id",
+      "toTable": "dim_risk_tier",
+      "toColumn": "tier_id",
+      "cardinality": "ManyToOne",
+      "crossFilteringBehavior": "BothDirections"
+    },
+    {
+      "fromTable": "fact_transactions",
+      "fromColumn": "bucket_id",
+      "toTable": "dim_amount_bucket",
+      "toColumn": "bucket_id",
+      "cardinality": "ManyToOne",
+      "crossFilteringBehavior": "BothDirections"
+    }
+  ]
+}

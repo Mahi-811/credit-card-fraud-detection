@@ -1,0 +1,3 @@
+transaction_status,total_transactions,volume_share_pct,total_financial_value,value_share_pct,avg_amount
+Legitimate,49850,99.7,2863249.72,96.751,57.44
+Fraudulent,150,0.3,96161.91,3.249,641.08
